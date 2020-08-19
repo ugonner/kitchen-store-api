@@ -21,6 +21,15 @@ class SeederController extends Controller
         ]);*/
 
         //sublocation
+        DB::table('placement')->insert([
+            ['name'=> 'Front Page Top'],
+            ['name'=> 'Front Page Side'],
+            ['name'=> 'Pages Top'],
+            ['name'=> 'Pages Side']
+        ]);
+
+        exit;
+        //sublocation
         DB::table('category')->insert([
             ['name'=> 'politics', 'objecttypeid'=>1, 'parentcategoryid'=>0],
             ['name'=> 'food', 'objecttypeid'=>2, 'parentcategoryid'=>0],
