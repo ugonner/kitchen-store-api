@@ -10,15 +10,56 @@ class SeederController extends Controller
 {
     //
     protected function seedTables(){
-        /*DB::table('objecttype')->insert([
+
+
+        //add cartcategory
+        DB::table('carttype')->insert([
+            ['name'=> 'Instant Pay'],
+            ['name'=> 'Pay On  Delivery'],
+            ['name'=> 'Subscription'],
+        ]);
+
+        //add cartcategory
+        DB::table('cartcategory')->insert([
+            ['name'=> 'Door Delivery'],
+            ['name'=> 'Sit-In'],
+            ['name'=> 'OutDoor Service'],
+        ]);
+
+        //sublocation
+        DB::table('productcategory')->insert([
+            ['name'=> 'Disries'],
+            ['name'=> 'Milk shakes'],
+            ['name'=> 'Coffee'],
+        ]);
+
+
+        //sublocation
+        DB::table('category')->insert([
+            ['name'=> 'Appetizer', 'objecttypeid'=>8, 'parentcategoryid'=>0],
+            ['name'=> 'Main Course', 'objecttypeid'=>2, 'parentcategoryid'=>0],
+            ['name'=> 'Desert', 'objecttypeid'=>1, 'parentcategoryid'=>0],
+            ['name'=> 'Bar', 'objecttypeid'=>1, 'parentcategoryid'=>0],
+            ['name'=> 'Pastries and Ice-Cream', 'objecttypeid'=>8, 'parentcategoryid'=>1],
+            ['name'=> 'Pasta', 'objecttypeid'=>8, 'parentcategoryid'=>2],
+            ['name'=> 'cereal', 'objecttypeid'=>8, 'parentcategoryid'=>2],
+            ['name'=> 'Liqour and Drinks', 'objecttypeid'=>8, 'parentcategoryid'=>4],
+            ['name'=> 'Barbeque', 'objecttypeid'=>8, 'parentcategoryid'=>0],
+            ['name'=> 'Beverages', 'objecttypeid'=>8, 'parentcategoryid'=>3],
+            ['name'=> 'Local Dishes', 'objecttypeid'=>8, 'parentcategoryid'=>2],
+            ['name'=> 'Continental Dishes', 'objecttypeid'=>8, 'parentcategoryid'=>2]
+        ]);
+        exit;
+        DB::table('objecttype')->insert([
             ['name'=> 'Advert'],
             ['name'=> 'Article'],
             ['name'=> 'Donation'],
             ['name'=> 'Event'],
             ['name'=> 'Facility'],
             ['name'=> 'Organization'],
+            ['name'=> 'Product'],
             ['name'=> 'Users']
-        ]);*/
+        ]);
 
         //sublocation
         DB::table('placement')->insert([
@@ -28,15 +69,7 @@ class SeederController extends Controller
             ['name'=> 'Pages Side']
         ]);
 
-        exit;
-        //sublocation
-        DB::table('category')->insert([
-            ['name'=> 'politics', 'objecttypeid'=>1, 'parentcategoryid'=>0],
-            ['name'=> 'food', 'objecttypeid'=>2, 'parentcategoryid'=>0],
-            ['name'=> 'Election', 'objecttypeid'=>1, 'parentcategoryid'=>1],
-            ['name'=> 'cereal', 'objecttypeid'=>2, 'parentcategoryid'=>2],
-            ['name'=> 'Hotels', 'objecttypeid'=>3, 'parentcategoryid'=>0]
-        ]);
+
 
         DB::table('cluster')->insert([
             ['name'=> 'Ndi ara'],

@@ -230,9 +230,30 @@
 
         <li class="nav-item">
 
+            <a href="{{route('cartpanel')}}" class="nav-link text-light font-italic">
+
+                Orders
+
+            </a>
+
+        </li>
+
+        <li class="nav-item">
+
             <a href="{{route('organizationpanel')}}" class="nav-link text-light font-italic">
 
                 Organizations
+
+            </a>
+
+        </li>
+
+
+        <li class="nav-item">
+
+            <a href="{{route('productpanel')}}" class="nav-link text-light font-italic">
+
+                Products
 
             </a>
 

@@ -1,23 +1,18 @@
 <?php
 
-namespace App\Http\ViewComposers;
+namespace App\Http\Controllers\Admin;
 
-use App\models\location;
-use App\User;
-use App\models\cluster;
-use App\models\focalarea;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 
-use Illuminate\View\View;
+//use \Illuminate\Database\Query;
 use Illuminate\Support\Facades\DB;
 
-class ViewComposer
+class AdminController extends Controller
 {
-    /**
-     * The user repository implementation.
-     *
-     * @var UserRepository
-     */
-    //protected $users;
+    //
+
+//protected $users;
     protected $categories;
     protected $main_categories;
     protected $clusters;
@@ -31,17 +26,19 @@ class ViewComposer
     protected $facilitycategories;
     protected $productcategories;
     protected $cartcategories;
+    protected $carttypes;
 
-    public function getAllObjects(){
+    public function getMenuItems(Request $request){
         $this->main_categories = DB::table('category')->where('parentcategoryid','=',0)->get();
         $this->eventcategories = DB::table('eventcategory')->get();
         $this->organizationcategories = DB::table('organizationcategory')->get();
         $this->facilitycategories = DB::table('facilitycategory')->get();
         $this->productcategories = DB::table('productcategory')->get();
         $this->cartcategories = DB::table('cartcategory')->get();
-        $this->clusters = cluster::all();
-        $this->focalareas = focalarea::all();
-        $this->locations = location::all();
+        $this->carttypes = DB::table('carttype')->get();
+        $this->clusters = DB::table('cluster')->get();
+        $this->focalareas = DB::table('focalarea')->get();
+        $this->locations = DB::table('location')->get();
         $this->roles = DB::table('role')->get();
         $this->positions = DB::table('position')->get();
         $this->sublocations = DB::table('sublocation')->get();
@@ -63,31 +60,9 @@ class ViewComposer
                 return $category;
             });
         }
-    }
 
-    /**
-     * Create a new profile composer.
-     *
-     * @param  UserRepository  $users
-     * @return void
-     */
-    public function __construct()
-    {
-        // Dependencies automatically resolved by service container...
-        //$this->users = $users;
-        $this->getAllObjects();
-    }
-
-    /**
-     * Bind data to the view.
-     *
-     * @param  View  $view
-     * @return void
-     */
-    public function compose(View $view)
-    {
-        $view->with(array(
-            'categories'=> $this->categories,
+        $menuitemsArray = [
+            //'categories'=> $this->categories,
             'main_categories'=> $this->main_categories,
             'clusters'=> $this->clusters,
             'focalareas'=> $this->focalareas,
@@ -99,8 +74,20 @@ class ViewComposer
             "organizationcategories"=>$this->organizationcategories,
             "facilitycategories"=>$this->facilitycategories,
             "productcategories"=>$this->productcategories,
-            "cartcategories"=>$this->cartcategories
-        ));
-        //$view->with('categories', $this->users->count());
+            "cartcategories"=>$this->cartcategories,
+            "carttypes"=>$this->carttypes
+
+        ];
+
+        if($request->wantsJson()){
+
+            return response()->json([
+                   "success"=>true,
+                    "menuitems"=>$menuitemsArray,
+                    "message"=>"menu items fetched successfully"
+                ]);
+        }
+        return redirect()->route('adminpanel')->with('output','please use view composer variables');
     }
+
 }

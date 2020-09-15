@@ -43,7 +43,6 @@
                                 <h2>Personal Info (step 1 of 5)</h2>
 
                                 <div class="form-group form-row">
-                                    @php $user = $user[0]; @endphp
                                     <input type="hidden" name="userid" value="{{$user->id}}">
                                     <div class="form-group col">
                                         <label for="name" class="col-form-label text-md-right">{{ __('Name') }}</label>

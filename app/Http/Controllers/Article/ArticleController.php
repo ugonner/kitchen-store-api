@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Article;
 
 use App\Http\Controllers\Controller;
-use App\models\article;
-use App\models\focalarea;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use App\Traits\ManyToManyHandler;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +16,18 @@ class ArticleController extends Controller
     use ManyToManyHandler;
 
     protected $ObjectTypeId = 2;
+
+    protected function getArticles(Request $request, Response $response){
+        $articlefieldarray = ['article.id as id', 'title','article.imageurl as imageurl','dateofpublication','no_of_comments','no_of_views','no_of_follows','category.id as categoryid','category.name as categoryname','users.id as userid','users.name as username','users.imageurl as userimageurl'];
+        $articles = DB::table('article')->join('category','article.categoryid','=','category.id')
+            ->join('users','article.userid','=','users.id')
+            ->select($articlefieldarray)->orderBy('article.id','DESC')->distinct()->paginate(10,$articlefieldarray);
+
+        if($request->wantsJson()){
+            return response()->json(array("articles"=>$articles));
+        }
+        return view('admin.article.articlepanel',['Adminarticles'=>$articles]);
+    }
 
     protected function getAdminArticles(){
         $articlefieldarray = ['article.id as id', 'title','article.imageurl as imageurl','dateofpublication','no_of_comments','no_of_views','no_of_follows','category.id as categoryid','category.name as categoryname','users.id as userid','users.name as username','users.imageurl as userimageurl'];

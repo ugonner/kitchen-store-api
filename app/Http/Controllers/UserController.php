@@ -46,11 +46,23 @@ class UserController extends Controller
     }
 
     protected function getUser(Request $request){
-        $userid = $request->input('userid');
+        $userIdByRequest = $request->input('userid');
+        $userIdByParam = $request->route('userid');
+        $userid = ((!empty($userIdByParam)? $userIdByParam: $userIdByRequest));
+
+        $userfieldArray = [
+            'users.*', 'role.name as rolename','position.name as positionname','location.name as locationname', 'sublocation.name as sublocationname'
+        ];
         $clusterfieldsarray = array('clusterid','cluster.name as clustername','cluster.description as description');
         $focalareafieldsarray = array('focalareaid','focalarea.name as focalareaname','focalarea.description as description');
 
-        $user = User::where('id','=',$userid)->select('*')->get();
+        $user = DB::table('users')
+            ->join('role','users.roleid','=','role.id')
+            ->join('position','users.positionid','=','position.id')
+            ->join('location','users.locationid','=','location.id')
+            ->join('sublocation','users.sublocationid','=','sublocation.id')
+            ->where('users.id','=',$userid)->select($userfieldArray)->get();
+
         $clusters = DB::table('clusterobjecttype')
             ->join('cluster', 'clusterobjecttype.clusterid', '=', 'cluster.id')
             ->where(['clusterobjecttype.objectid'=>$userid, 'clusterobjecttype.objecttypeid'=> $this->ObjectId])
@@ -61,28 +73,62 @@ class UserController extends Controller
             ->where(['focalareaobjecttype.objectid'=> $userid, 'focalareaobjecttype.objecttypeid'=>$this->ObjectId])
             ->select($focalareafieldsarray)->get();
 
+        $user = $user[0];
+        if($request->wantsJson()){
+            return response()->json(["user"=>$user, "user_clusters"=>$clusters, "user_focalareas"=>$focalareas,"success"=>true, "message"=>'got you']);
+        }
+        if($userIdByParam){
+            return view('admin.users.userprofile',["user"=>$user, "user_clusters"=>$clusters, "user_focalareas"=>$focalareas,"success"=>true]);
+
+        }
         return view('admin.users.updateuser',["user"=>$user, "user_clusters"=>$clusters, "user_focalareas"=>$focalareas]);
     }
 
 
 
+
     public  function registerUser(Request $request){
-        $validated = Validator::make($request->only([
+        $requestArray = [
             'name',
             'email',
-            'password',
-            'password_confirmation',
-            'mobile'
-        ]),array(
+            'mobile',
+            'address'
+        ];
+
+        $validationArray = array(
             'name'=> 'required|string',
             "email"=>"required|email|unique:users",
-            "password"=>"required|confirmed",
             "mobile"=> "required",
-            "imageurl"=> 'image|nullable'
-        ));
-        if($validated->fails()){
-            Redirect::to('adminregform')->withErrors($validated)->withInput();
+            "address"=> 'string'
+        );
+
+        if($request->has('password_confirmation')){
+            $requestArray[]= 'password';
+            $requestArray[]= 'password_confirmation';
+            $validationArray{"password"} = "required|confirmed";
         }
+
+
+        $requestFullArray = $request->only($requestArray);
+        $validator = Validator::make($requestFullArray,$validationArray);
+
+        //$validator = $request->validate($validationArray);
+        //u can do something like this:
+
+    if ($validator->fails()) {
+
+        if($request->wantsJson())
+        {
+            return response()->json(array(
+                'success' => false,
+                'message' => 'There are incorrect values in the form!',
+                'errors' => $validator->getMessageBag()->toArray()
+            ), 422);
+        }else{
+            return back()->withErrors($validator);
+        }
+
+    }
 
         //check for profile pic
         if($request->hasFile('imageurl') && $request->file('imageurl')->isValid()){
@@ -95,19 +141,24 @@ class UserController extends Controller
 
         //$imagepath = $request->file('imageurl')->store('/api/public/images/users/');
 
-        $userid = DB::table('users')->insertGetId(array(
+        $insertionArray_user = array(
             "name"=>$request->input('name'),
             "email"=>$request->input('email'),
             "mobile"=>$request->input('mobile'),
             "password"=>Hash::make($request->input('password')),
+            "address"=>$request->input('address', 'N\A'),
             "about"=>$request->input('about', 'Just an enthusiast'),
-            "imageurl"=>($url ? $url: '/api/images/users/user.jpg'),
             "rolenote"=>$request->input('rolenote','just a good one'),
             "roleid"=>$request->input('roleid',1),
-            "positionid"=>$request->input('positionid',2),
+            "positionid"=>$request->input('positionid',1),
             "locationid"=>$request->input('locationid',4),
             "sublocationid"=>$request->input('sublocationid',1)
-        ));
+        );
+        if(!empty($url)){
+            $insertionArray_user{"imageurl"} = $url;
+        }
+
+        $userid = DB::table('users')->insertGetId($insertionArray_user);
 
         //$userid = DB::table('users')->where('email','=',$request->input('email'))->select('id')->get();
         //adding user to focalareas or department
@@ -119,27 +170,239 @@ class UserController extends Controller
         $this->insertIdIntoMultipleGroups($request,$userid,'clusterobjecttype',$cluster_count,'cluster','objectid','clusterid','objecttypeid',7);
 
         $message = "User added successfully";
-        return back()->with("output",$message);
+        if($request->wantsJson()){
+            return response()->json(["success"=>true,"message"=>$message]);
+        }else{
+            return back()->with("output",$message);
+        }
     }
+
+
+    protected function loginUser(Request $request){
+        if(Auth::attempt($request->only(['email','password']))){
+            $userid = Auth::id();
+            $user = Auth::user();
+            if($request->wantsJson()){
+                return response()->json(["userid"=> $userid, "user"=>$user, "success"=>true, "message"=>'you are logged in succeddfully']);
+            }else{
+                return redirect()->route('userprofile',["userid"=>$userid]);
+            }
+        }
+        return response()->json(["success"=>false,"message"=>'you are not a registered member']);
+    }
+
+
+
+    protected function editUserByUser(Request $request){
+        $userid = ($request->route("userid") ? $request->route("userid") : $request->input('userid'));
+        $old_email = $request->input('old_email');
+        $requestArray = ([
+            'name',
+            'mobile',
+            'address'
+        ]);
+
+        $validationArray = array(
+            'name'=> 'required|string',
+            "mobile"=> "required",
+            "address"=> 'string'
+        );
+
+        if($request->has('password_confirmation')){
+            $requestArray[]= 'password';
+            $requestArray[]= 'password_confirmation';
+            $validationArray{"password"} = "required|confirmed";
+        }
+
+        //if email is altered too; add email field validation
+        if($request->input('email') != $old_email){
+            $requestArray[] = 'email';
+            $validationArray["email"] = "email|unique:users";
+        }
+
+        $requestFullArray = $request->only($requestArray);
+        $validator = Validator::make($requestFullArray,$validationArray);
+
+        //$validator = $request->validate($validationArray);
+        //u can do something like this:
+
+        if ($validator->fails()) {
+
+            if($request->wantsJson())
+            {
+                return response()->json(array(
+                    'success' => false,
+                    'message' => 'There are incorrect values in the form!',
+                    'errors' => $validator->getMessageBag()->toArray()
+                ), 422);
+            }else{
+                return back()->withErrors($validator);
+            }
+
+        }
+
+        //check for profile pic
+        if($request->hasFile('imageurl') && $request->file('imageurl')->isValid()){
+            $filename = $request->file('imageurl')->getClientOriginalName().time().'.'.$request->file('imageurl')->extension();
+            if(!$imagepath = $request->file('imageurl')->storeAs('public/images/users/',$filename)){
+                echo('No no image not stored');
+            }
+            $url = Storage::url('images/users/'.$filename);
+        }
+
+        $updateArray = array(
+            "name"=>$request->input('name'),
+            "mobile"=>$request->input('mobile'),
+            "password"=>Hash::make($request->input('password')),
+            "address"=>$request->input('address', 'N\A'),
+            "about"=>$request->input('about', 'Just an enthusiast'),
+            "rolenote"=>$request->input('rolenote','just a good one'),
+            "roleid"=>$request->input('roleid',1),
+            "positionid"=>$request->input('positionid',2)
+        );
+
+        if($request->has('old_imageurl')){
+            $updateArray["imageurl"] = ((!empty($url))? $url: $request->input('old_imageurl'));
+
+        }
+        //$imagepath = $request->file('imageurl')->store('/api/public/images/users/');
+        DB::table('users')->where(['id'=>$userid,'email'=>$old_email])->update($updateArray);
+
+        //$userid = DB::table('users')->where('email','=',$request->input('email'))->select('id')->get();
+        //adding user to focalareas or department
+        $focalarea_count = $request->input('focalareascount');
+        $this->insertIdIntoMultipleGroups($request,$userid,'focalareaobjecttype',$focalarea_count,'focalarea','objectid','focalareaid','objecttypeid',$this->ObjectTypeId);
+
+        //ADDING USER TO CLUSTERS
+        $cluster_count = $request->input('clusterscount');
+        $this->insertIdIntoMultipleGroups($request,$userid,'clusterobjecttype',$cluster_count,'cluster','objectid','clusterid','objecttypeid',$this->ObjectTypeId);
+
+        $message = "Profile Edited";
+
+        $message = "User added successfully";
+        if($request->wantsJson()){
+            return response()->json(["success"=>true,"message"=>$message]);
+        }else{
+            return back()->with("output",$message);
+        }
+    }
+
+
+    protected function editUserOneProperty(Request $request){
+        $userid = ($request->route("userid") ? $request->route("userid") : $request->input('userid'));
+        $old_email = $request->input('old_email');
+
+        $requestArray = [
+            'old_email'
+        ];
+        $validationArray = [
+            "email" => 'email|exists:users'
+        ];
+
+        $requestFullArray = $request->only($requestArray);
+        $validator = Validator::make($requestFullArray,$validationArray);
+
+        //$validator = $request->validate($validationArray);
+        //u can do something like this:
+
+        if ($validator->fails()) {
+
+            if($request->wantsJson())
+            {
+                return response()->json(array(
+                    'success' => false,
+                    'message' => 'There are incorrect values in the form!',
+                    'errors' => $validator->getMessageBag()->toArray()
+                ), 422);
+            }else{
+                return back()->withErrors($validator);
+            }
+
+        }
+
+
+
+        //check for profile pic
+        if($request->hasFile('imageurl') && $request->file('imageurl')->isValid()){
+            $filename = $request->file('imageurl')->getClientOriginalName().time().'.'.$request->file('imageurl')->extension();
+            if(!$imagepath = $request->file('imageurl')->storeAs('public/images/users/',$filename)){
+                echo('No no image not stored');
+            }
+            $url= Storage::url('images/users/'.$filename);
+        };
+
+        $pty = (($request->input('pty'))?$request->input('pty'): $request->route('pty'));
+        $val = ((!empty($url)) ? $url : $request->route('val'));
+
+        if($pty == 'password'){
+            $val = Hash::make($val);
+        }
+        $updateArray = [$pty=>$val];
+        DB::table('users')->where("id",'=',$userid)->where('email','=',$old_email)->update($updateArray);
+
+
+        $message = "User added successfully";
+        if($request->wantsJson()){
+            return response()->json(["success"=>true,"message"=>$message]);
+        }else{
+            return back()->with("output",$message);
+        }
+    }
+
+
 
 
     protected function editUser(Request $request){
         $userid = $request->input('userid');
         $old_email = $request->input('old_email');
-        $validated = Validator::make($request->only([
+
+
+        $requestArray = ([
             'name',
-            'password',
-            'password_confirmation',
             'mobile',
-            'imageurl'
-        ]),array(
+            'address','imageurl'
+        ]);
+
+        $validationArray = array(
             'name'=> 'required|string',
-            "password"=>"required|confirmed",
             "mobile"=> "required",
-            "imageurl"=> 'image|nullable'
-        ));
-        if($validated->fails()){
-            Redirect::to('adminregform')->withErrors($validated)->withInput();
+            "address"=> 'string',
+            'imageurl'=>'image|nullable'
+        );
+
+        //if has passwod confirmation field then validata as such
+        if($request->has('password_confirmation')){
+            $requestArray[]= 'password';
+            $requestArray[]= 'password_confirmation';
+            $validationArray{"password"} = "required|confirmed";
+        }
+        //if email is altered too; add email field validation
+        if($request->input('email') != $old_email){
+            $requestArray[] = 'email';
+            $validationArray["email"] = "email|unique:users";
+        }
+
+
+
+        $requestFullArray = $request->only($requestArray);
+        $validator = Validator::make($requestFullArray,$validationArray);
+
+        //$validator = $request->validate($validationArray);
+        //u can do something like this:
+
+        if ($validator->fails()) {
+
+            if($request->wantsJson())
+            {
+                return response()->json(array(
+                    'success' => false,
+                    'message' => 'There are incorrect values in the form!',
+                    'errors' => $validator->getMessageBag()->toArray()
+                ), 422);
+            }else{
+                return back()->withErrors($validator);
+            }
+
         }
 
         //check for profile pic
@@ -157,6 +420,7 @@ class UserController extends Controller
             "email"=>$request->input('email'),
             "mobile"=>$request->input('mobile'),
             "password"=>Hash::make($request->input('password')),
+           "address"=>$request->input('address', 'N\A'),
             "about"=>$request->input('about', 'Just an enthusiast'),
             "imageurl"=>((!empty($url))? $url: $request->input('old_imageurl')),
             "rolenote"=>$request->input('rolenote','just a good one'),

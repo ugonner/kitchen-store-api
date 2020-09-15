@@ -30,6 +30,7 @@ Route::prefix('admin/user')->group(function(){
 
     //get users in admin panel
     Route::get('userspanel','UserController@getAdminUsers')->name('userspanel');
+    Route::get('userprofile/{userid}','UserController@getUser')->name('userprofile');
 
     Route::get('register', function(){
         return view('admin.users.register');
@@ -38,9 +39,15 @@ Route::prefix('admin/user')->group(function(){
 
     //actural registration
     Route::post('registration', 'UserController@registerUser')->name('adminreg');
+    Route::post('login', 'UserController@loginUser')->name('adminlogin');
 
     //actual update
     Route::post('update', 'UserController@editUser')->name('update');
+    //update by public users
+    Route::post('updateprofile', 'UserController@editUserByUser')->name('updateprofile');
+
+    //update by public users
+    Route::post('edit', 'UserController@editUserOneProperty')->name('updateprofile');
 
     //actual Remove from groups
     Route::post('removeUserFromGroups', 'UserController@removeUserFromGroups')->name('remove_user_from_groups');
@@ -60,6 +67,8 @@ Route::prefix('/admin/article')->group(function(){
 
     Route::get("/",'Article\ArticleController@getAdminArticles')->name('articlepanel');
 
+    Route::get("/getarticles",'Article\ArticleController@getArticles')->name('getarticles');
+
     Route::get("articleform",function(){
         return view('admin/article/articleform');
     })->name('adminarticleform');
@@ -75,12 +84,44 @@ Route::prefix('/admin/article')->group(function(){
     //actual Remove from groups
     Route::post('removeArticleFromGroups', 'Article\ArticleController@removeArticleFromGroups')->name('remove_article_from_groups');
     Route::post('deleteArticleFile', 'Article\ArticleController@deleteArticleFile')->name('deleteArticleFile');
-//deleteArticleFile
+
     //manage category (create and edit)
     Route::post('createcategory', 'Article\ArticleController@createCategory')->name('create_category');
     Route::post('editcategory', 'Article\ArticleController@editCategory')->name('edit_category');
 
 });
+
+Route::get('admin/getmenuitems',["uses"=>"Admin\AdminController@getMenuItems"])->name('getmenuitems');
+Route::prefix('/admin/cart')->group(function(){
+
+    Route::get("/",'Cart\CartController@getCarts')->name('cartpanel');
+    Route::get("/getcart",'Cart\CartController@getCart')->name('getcart');
+    Route::get("/getcarts/{pty}/{val}",'Cart\CartController@getCartsByProperty')->name('getcarts_filtered');
+
+    Route::get("cartform",function(){
+        return view('admin/cart/cartform');
+    })->name('admincartform');
+
+    Route::get("editcart/{cartid}",'Cart\CartController@getCartForEdit')->name('editcart');
+
+
+    Route::post('createcart',"Cart\CartController@registerCart")->name('createcart');
+    Route::post('updatecart','Cart\CartController@editCart')->name('updatecart');
+//actual Remove from groups
+    Route::post('removecartFromGroups', 'Cart\CartController@removeCartFromGroups')->name('remove_cart_from_groups');
+    Route::post('removecartFromLocations', 'Cart\CartController@removeCartFromLocations')->name('remove_cart_from_locations');
+    Route::post('deleteCartFile', 'Cart\CartController@deleteCartFile')->name('deletecartFile');
+//deleteArticleFile
+//manage category (create and edit)
+    Route::post('createcartcategory', ["uses"=>"Cart\CartController@createCategory"])->name('create_cartcategory');
+    Route::post('editcartcategory', ["uses"=>'Cart\CartController@editCategory'])->name('edit_cartcategory');
+
+//manage organisation certification levels
+    Route::post('createcarttype', ["uses"=>"Cart\CartController@createCarttype"])->name('create_carttype');
+    Route::post('editcarttype', ["uses"=>"Cart\CartController@editCarttype"])->name('edit_carttype');
+
+});
+
 
 Route::prefix('/admin/event')->group(function(){
 
@@ -273,6 +314,48 @@ Route::prefix('/admin/gallery')->group(function(){
     Route::post('creategallery','Gallery\GalleryController@createGallery')->name('create_gallery');
     Route::post('deletegalleryFile', 'Gallery\GalleryController@deleteGalleryFile')->name('delete_gallery_file');
 
+
+});
+
+
+Route::prefix('/admin/product')->group(function(){
+    Route::get("getproducts",'Product\ProductController@getProducts')->name('getproducts');
+    Route::get("getproducts/{pty}/{val}",'Product\ProductController@getProductsByProperty')->name('getproducts_filtered');
+
+
+
+    Route::get("/",'Product\ProductController@getAdminproducts')->name('productpanel');
+
+    Route::get("productform",function(){
+        return view('admin/product/productform');
+    })->name('adminproductform');
+
+    Route::get("updateproduct",'Product\ProductController@getproductForEdit')->name('updateproduct');
+    Route::get("getproduct",'Product\ProductController@getproductForEdit')->name('getproduct');
+
+    Route::get("articlepanel",function(){
+        return view('admin/article/articlepanel');
+    })->name('adminarticlepanel');
+
+    Route::post('createproduct','Product\ProductController@createproduct')->name('createproduct');
+    Route::post('editproduct','Product\ProductController@editProduct')->name('editproduct');
+
+    //CREATING AND EDITING COMMENTS ON PRODUCT
+    Route::post('createproductcomment','Product\ProductController@createProductComment')->name('createproductcomment');
+    Route::post('editproductcomment','Product\ProductController@editProductComment')->name('editproductcomment');
+
+//actual Remove from groups
+    Route::post('removeproductFromGroups', 'Product\ProductController@removeproductFromGroups')->name('remove_product_from_groups');
+    Route::post('removeproductFromLocations', 'Product\ProductController@removeproductFromLocations')->name('remove_product_from_locations');
+    Route::post('deleteproductFile', 'Product\ProductController@deleteproductFile')->name('deleteproductFile');
+//deleteArticleFile
+//manage category (create and edit)
+    Route::post('createproductcategory', 'Product\ProductController@createCategory')->name('create_productcategory');
+    Route::post('editproductcategory', 'Product\ProductController@editCategory')->name('edit_productcategory');
+
+//manage organisation certification levels
+    Route::post('createproductcertificationlevel', 'Product\ProductController@createCertificationLevel')->name('create_productcertificationlevel');
+    Route::post('editproductcertificationlevel', 'Product\ProductController@editCertificationlevel')->name('edit_productcertificationlevel');
 
 });
 

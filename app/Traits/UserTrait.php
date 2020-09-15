@@ -4,66 +4,112 @@ namespace App\Traits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Hash;
 
+use App\Traits\ManyToManyHandler;
 trait UserTrait{
 
-    //inserting ids into a many to many relationship table,
-    //form input (eg checkbox) name for groupids should have same string+integer (eg index as in "cluster3") < count of group
-    public static function insertIdIntoMultipleGroups(Request $request,$id,$relationship_table,$group_count,$group_form_name_prefix,$ids_Column_name,$groups_column_name,$third_column_name,$third_column_value){
-        $insert_values_array = [];
-        for($i=0; $i<$group_count; $i++){
-            $form_name = $group_form_name_prefix.$i;
-            if($request->filled($form_name)){
-                $group_id_value = $request->input($form_name);
-                $insert_values_array[] = array($ids_Column_name => $id,$groups_column_name=>$group_id_value, $third_column_name=>$third_column_value);
-            }
+    use ManyToManyHandler;
+
+    public  function registerUserGetId(Request $request){
+        $requestArray = $request->only([
+            'name',
+            'email',
+            'mobile',
+            'address'
+        ]);
+        $validationArray = array(
+            'name'=> 'required|string',
+            "email"=>"required|email|unique:users",
+            "mobile"=> "required",
+            "address"=> 'string'
+        );
+
+        if($request->has('password_confirmation')){
+            $requestArray[]= 'password';
+            $requestArray[]= 'password_confirmation';
+            $validationArray{"password"} = "required|confirmed";
         }
 
-        if(!empty($insert_values_array)){
-            DB::table($relationship_table)->insert($insert_values_array);
-            return true;
+
+        $validator = Validator::make($requestArray,$validationArray);
+
+        //$validator = $request->validate($validationArray);
+        //u can do something like this:
+
+        if ($validator->fails()) {
+
+            if($request->wantsJson())
+            {
+                return response()->json(array(
+                    'success' => false,
+                    'message' => 'There are incorect values in the form!',
+                    'errors' => $validator->getMessageBag()->toArray()
+                ), 422);
+            }else{
+                return back()->withErrors($validator);
+            }
+
+        }
+
+        //check for profile pic
+        if($request->hasFile('imageurl') && $request->file('imageurl')->isValid()){
+            $filename = $request->file('imageurl')->getClientOriginalName().time().'.'.$request->file('imageurl')->extension();
+            if(!$imagepath = $request->file('imageurl')->storeAs('public/images/users/',$filename)){
+                echo('No no image not stored');
+            }
+            $url = Storage::url('images/users/'.$filename);
+        }
+
+        //$imagepath = $request->file('imageurl')->store('/api/public/images/users/');
+
+        $insertionArray_user = array(
+            "name"=>$request->input('name'),
+            "email"=>$request->input('email'),
+            "mobile"=>$request->input('mobile'),
+            "password"=>Hash::make($request->input('password')),
+            "address"=>$request->input('address', 'N\A'),
+            "about"=>$request->input('about', 'Just an enthusiast'),
+            "rolenote"=>$request->input('rolenote','just a good one'),
+            "roleid"=>$request->input('roleid',1),
+            "positionid"=>$request->input('positionid',1),
+            "locationid"=>$request->input('locationid',4),
+            "sublocationid"=>$request->input('sublocationid',1)
+        );
+        if(!empty($url)){
+            $insertionArray_user{"imageurl"} = $url;
+        }
+
+        $userid = DB::table('users')->insertGetId($insertionArray_user);
+
+        //$userid = DB::table('users')->where('email','=',$request->input('email'))->select('id')->get();
+        //adding user to focalareas or department
+        $focalarea_count = $request->input('focalareascount');
+        $this->insertIdIntoMultipleGroups($request,$userid,'focalareaobjecttype',$focalarea_count,'focalarea','objectid','focalareaid','objecttypeid',7);
+
+        //ADDING USER TO CLUSTERS
+        $cluster_count = $request->input('clusterscount');
+        $this->insertIdIntoMultipleGroups($request,$userid,'clusterobjecttype',$cluster_count,'cluster','objectid','clusterid','objecttypeid',7);
+        $userid2 = (is_array($userid)? $userid[0]: $userid);
+        return $userid2;
+
+        //$message = "User added successfully";
+        //if($request->wantsJson()){
+        //    return response()->json(["results"=>true,"message"=>$message]);
+        //}else{
+        //    return back()->with("output",$message);
+        //}
+    }
+
+    public function registerUserGetUser(Request $request){
+        if($userid = $this->registerUserGetId($request)){
+            $user = DB::table('users')->where('id','=',$userid)->get();
+            $userObj = (is_array($user)? $user[0]: $user);
+            return $userObj;
         }
         return false;
     }
-
-
-    //removing ids into a many to many relationship table,
-    //form input (eg checkbox) name for groupids should have same string+integer (eg index as in "cluster3") < count of group
-    public static function removeIdFromMultipleGroups(Request $request,$id,$relationship_table,$group_count,$group_form_name_prefix,$ids_Column_name,$groups_column_name,$third_column_name,$third_column_value){
-        $insert_values_array = [];
-        for($i=0; $i<$group_count; $i++){
-            $form_name = $group_form_name_prefix.$i;
-            if($request->filled($form_name)){
-                $group_id_value = $request->input($form_name);
-                $remove_values_array[] = array($ids_Column_name => $id,$groups_column_name=>$group_id_value, $third_column_name=>$third_column_value);
-            }
-        }
-
-        if(!empty($remove_values_array)){
-            DB::table($relationship_table)->where([$remove_values_array])->delete();
-            return true;
-        }
-        return false;
-    }
-
-
-    /*
-        function wastedCodes(){
-
-
-            $focalarea_array = [];
-            for($i=0; $i<$focalarea_count; $i++){
-                if($request->filled('focalarea'.$i)){
-                    $focalarea = $request->('focalarea'.$i);
-                    $focalarea_array[] = array("objecttypeid"=>$userid,"objectid"=>$this->ObjectId,"focalareaid"=>$focalarea);
-                }
-            }
-            if(!empty($focalarea_array)){
-                DB::table('focalareaobjecttype')->insert($focalarea_array);
-            }
-        }*/
-
 }
