@@ -40,7 +40,7 @@
                         <!-- The slideshow -->
                         <div class="carousel-inner">
                             <div class="carousel-item active">
-                                <h2>Personal Info (step 1 of 5)</h2>
+                                <h2>Edit Profile: Personal Information section about {{old('name',$user->name)}},</h2>
 
                                 <div class="form-group form-row">
                                     <input type="hidden" name="userid" value="{{$user->id}}">
@@ -126,13 +126,13 @@
 
 
                             <div class="carousel-item">
-                                <h2>Department And Position (Step 2 of 5)</h2>
+                                <h2>Edit Profile: Departments / Positions Information section about {{old('name',$user->name)}},</h2>
 
                                 <div class="row">
                                     <label for="" class="">Department</label>
                                     <div class="col">
                                     <div class="form-group">
-                                        <input type="hidden" class="form-control" name="focalareascount" value="{{(count($focalareas) - count($user_focalareas))}}">
+                                        <input type="hidden" class="form-control" name="focalareascount" value="{{(count($focalareas))}}">
                                     </div>
                                     <!--@php $filled_focalareas = (!empty($user_focalareas)? $user_focalareas : old('')) @endphp-->
 
@@ -198,8 +198,8 @@
 
 
                             <div class="carousel-item">
+                                <h2>Edit Profile: Role and Description Information section about {{old('name',$user->name)}},</h2>
 
-                                <h2>Role And Description (Step 3 of 5)</h2>
                                 <div class="row">
                                     <div class="form-group col">
                                         <label for="roleid" class="col-form-label text-md-right">{{ __('Role') }}</label>
@@ -246,18 +246,18 @@
                             </div>
 
                             <div class="carousel-item v-100">
-                                <h2>Group (Step 4 of 5)</h2>
-                                <div class="row">
+                                <h2>Edit Profile: Associated Groups Information section about {{old('name',$user->name)}},</h2>
+                                <div class="row" style="margin:40px;">
                                     <div class="col-sm-12 form-group">
 
                                         <div class="form-group">
-                                            <input type="hidden" class="form-control" name="clusterscount" value="{{(count($clusters) - count($user_clusters))}}">
+                                            <input type="hidden" class="form-control" name="clusterscount" value="{{(count($clusters))}}">
                                         </div>
 
 
                                         @php
-                                        for ($cl=0; $cl<count($clusters); $cl++){
-                                        for ($ucs=0; $ucs<count($user_clusters); $ucs++){
+                                        for ($cl=0; $cl < count($clusters); $cl++){
+                                        for ($ucs=0; $ucs < count($user_clusters); $ucs++){
                                         if($clusters[$cl]->id == $user_clusters[$ucs]->clusterid){
                                         $clusters[$cl]['selected'] = true;
                                         }
@@ -303,7 +303,7 @@
                             </div>
 
                             <div class="carousel-item w-100">
-                                <h2>Group (...Almost There)</h2>
+                                <h2>Edit Profile: Brief Information section about {{old('name',$user->name)}},</h2>
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <div class="form-group">
@@ -338,7 +338,7 @@
 
                             <div class="carousel-item">
                                 <div class="row">
-                                    <h2>Upload Profile Picture (Step 5 of 5)</h2>
+                                    <h2>Edit Profile: Profile Picture Information section about {{old('name',$user->name)}},</h2>
                                     <div class="form-group">
                                         <div>
                                             <img src="{{asset($user->imageurl)}}" class="img-fluid">
@@ -405,7 +405,7 @@
             <div class="form-group">
                 <form method="POST"  action="{{route('remove_user_from_groups')}}">
                     @csrf
-                    <div>
+                    <div style="margin-left: 40px;">
                         <input type="hidden" name="userid" value="{{$user->id}}">
                         <input type="hidden" name="focalareascount" value="{{count($user_focalareas)}}">
                         @for ($fa=0; $fa< count($user_focalareas); $fa++)

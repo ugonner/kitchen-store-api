@@ -122,41 +122,6 @@
 </head>
 <body>
 
-@php
-use Illuminate\Support\Facades\DB;
-$userid = Auth::id();
-
-//get total number of objects
-$cartscount = DB::table('cart')->count();
-
-//get last admin's object count
-$lastcartscount = DB::table('users')->where(["id"=>$userid])->select('lastcartscount')->get()[0];
-
-//get the diff ie new object inserted;
-$orderdiff = $cartscount - $lastcartscount->lastcartscount;
-
-
-//for product
-$productscount = DB::table('product')->count();
-$lastproductscount = DB::table('users')->where(["id"=>$userid])->select('lastproductscount')->get()[0];
-$productdiff = $productscount - $lastproductscount->lastproductscount;
-
-
-//for user
-$userscount = DB::table('users')->count();
-$lastuserscount = DB::table('users')->where(["id"=>$userid])->select('lastuserscount')->get()[0];
-$userdiff = $userscount - $lastuserscount->lastuserscount;
-
-
-//for article
-$articlescount = DB::table('article')->count();
-$lastarticlescount = DB::table('users')->where(["id"=>$userid])->select('lastarticlescount')->get()[0];
-$articlediff = $articlescount - $lastarticlescount->lastarticlescount;
-
-
-@endphp
-
-
 <div class="vertical-nav bg-dark" id="sidebar">
 
     <div class="py-4 px-3 mb-4 bg-dark">
@@ -199,11 +164,12 @@ $articlediff = $articlescount - $lastarticlescount->lastarticlescount;
 
             <a href="{{route('articlepanel')}}" class="nav-link text-light font-italic">
 
-                Articles <span class="rounded-circle btn btn-danger">{{$articlediff}}</span>
+                Articles
 
             </a>
 
         </li>
+
 
         <li class="nav-item">
 
@@ -227,36 +193,6 @@ $articlediff = $articlescount - $lastarticlescount->lastarticlescount;
 
         <li class="nav-item">
 
-            <a href="{{route('donationpanel')}}" class="nav-link text-light font-italic">
-
-                Donations
-
-            </a>
-
-        </li>
-
-        <li class="nav-item">
-
-            <a href="{{route('eventpanel')}}" class="nav-link text-light font-italic">
-
-                Events
-
-            </a>
-
-        </li>
-
-        <li class="nav-item">
-
-            <a href="{{route('facilitypanel')}}" class="nav-link text-light font-italic">
-
-                Facilities
-
-            </a>
-
-        </li>
-
-        <li class="nav-item">
-
             <a href="{{route('gallerypanel')}}" class="nav-link text-light font-italic">
 
                 Gallery
@@ -269,17 +205,7 @@ $articlediff = $articlescount - $lastarticlescount->lastarticlescount;
 
             <a href="{{route('cartpanel')}}" class="nav-link text-light font-italic">
 
-                Orders  {{$orderdiff}}
-
-            </a>
-
-        </li>
-
-        <li class="nav-item">
-
-            <a href="{{route('organizationpanel')}}" class="nav-link text-light font-italic">
-
-                Organizations
+                Orders
 
             </a>
 
@@ -290,7 +216,7 @@ $articlediff = $articlescount - $lastarticlescount->lastarticlescount;
 
             <a href="{{route('productpanel')}}" class="nav-link text-light font-italic">
 
-                Products <span class="badge"> {{$productdiff}}</span>
+                Products <span class="badge"></span>
 
             </a>
 
@@ -300,7 +226,7 @@ $articlediff = $articlescount - $lastarticlescount->lastarticlescount;
 
             <a href="{{route('userspanel')}}" class="nav-link text-light font-italic">
 
-                Users <span class="badge"> {{$userdiff}}</span>
+                Users <span class="badge"></span>
 
             </a>
 

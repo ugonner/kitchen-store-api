@@ -23,9 +23,22 @@ class ArticleController extends Controller
             ->join('users','article.userid','=','users.id')
             ->select($articlefieldarray)->orderBy('article.id','DESC')->distinct()->paginate(10,$articlefieldarray);
 
-        if($request->wantsJson()){
-            return response()->json(array("articles"=>$articles));
+        //update admin article count;
+        if(Auth::check()){
+
+            $userid = Auth::id();
+
+            $articlesCount = DB::table('article')->count();
+            $updateArray = ["lastarticlescount"=>$articlesCount];
+
+            DB::table('users')->where(["users.id"=>$userid])->update($updateArray);
+
         }
+
+        if($request->wantsJson()){
+            return response()->json(array("articles"=>$articles, "success"=>true, "message"=>'Posts fetched successfully'));
+        }
+
         return view('admin.article.articlepanel',['Adminarticles'=>$articles]);
     }
 

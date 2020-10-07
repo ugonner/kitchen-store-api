@@ -29,7 +29,7 @@ class CartController extends Controller
 
         $cartfieldarray = [
             'cart.id as id', 'cart.orderdate','cart.ordertime', 'cart.paid','ordernote','statusnote','status',
-            'cart.updated_at as dateofpublication','orderamount','carttypeid','carttype.name as carttypename',
+            'cart.updated_at as dateofpublication','orderamount','orderaddress', 'orderlocationid','ordersublocationid','carttypeid','carttype.name as carttypename',
             'cartcategory.id as cartcategoryid','cartcategory.name as cartcategoryname',
             'users.id as userid','users.name as username','users.imageurl as userimageurl'];
         $carts = DB::table('cart')
@@ -39,11 +39,29 @@ class CartController extends Controller
             ->select($cartfieldarray)->orderBy('cart.id','DESC')->distinct()->paginate(10,$cartfieldarray);
 
         $carttypes = DB::table('carttype')->get();
+
+        //update admin order count;
+        if(Auth::check()){
+
+            $userid = Auth::id();
+
+            $ordersCount = DB::table('cart')->count();
+            $updateArray = ["lastcartscount"=>$ordersCount];
+
+            DB::table('users')->where(["users.id"=>$userid])->update($updateArray);
+
+        }
+
+
         //echo(json_encode($carts)); exit;
         if($request->wantsJson()){
+
             return response()->json(["carts"=>$carts,"success"=>true,"message"=>'orders fetched']);
+
         }
+
         return view('admin.cart.cartpanel',['carts'=>$carts,"carttypes"=>$carttypes]);
+
     }
 
 
@@ -114,7 +132,7 @@ class CartController extends Controller
 
         $itemsArray = [
             'product.id as productid','title','imageurl','discountrate'
-            ,'price','no_of_views'
+            ,'product.price','no_of_views'
         ];
 
         $cart = DB::table('cart')
@@ -141,37 +159,41 @@ class CartController extends Controller
 
 
     protected function getCart(Request $request){
-        $cartid = $request->input('id');
+        $cartid = ($request->input('id')?$request->input('id'): $request->route('id'));
         //$cartstr = ['cart.id as id', 'cart.orderdate','cart.ordertime','cart.paid','cart.statusnote',
         //    'cart.updated_at as dateofpublication','orderamount','carttypeid'];
         $cartfieldarray = [
             'cart.*',
             'cartcategory.id as cartcategoryid','cartcategory.name as cartcategoryname',
+            'carttype.id as cartttypeid','carttype.name as carttypename',
             'users.id as userid','users.name as username','users.imageurl as userimageurl'];
 
         $itemsArray = [
-            'product.id as productid','title','imageurl','discountrate'
-            ,'price','no_of_views'
+            'product.*', 'category.name as categoryname','productcategory.name as productcategoryname',
+            "cartitem.price as cartitemprice","cartitem.quantity as cartitemquantity"
         ];
 
         $cart = DB::table('cart')
             ->join('cartcategory','cart.cartcategoryid','=','cartcategory.id')
+            ->join('carttype','cart.carttypeid','=','carttype.id')
             ->join('users','cart.userid','=','users.id')
             ->where('cart.id','=',$cartid)
-            ->select($cartfieldarray)->orderBy('cart.id','DESC')->distinct()->paginate(10,$cartfieldarray);
+            ->select($cartfieldarray)->orderBy('cart.id','DESC')->get();
 
         $items = DB::table('cartitem')->join('product','productid','=','product.id')
+            ->join('category','product.categoryid','=','category.id')
+            ->join('productcategory','product.productcategoryid','=','productcategory.id')
             ->join('cart','cartid','=','cart.id')
             ->where('cartid','=',$cartid)
-            ->select($itemsArray)->orderBy('cart.id','DESC')->distinct()->paginate(10,$itemsArray);
+            ->select($itemsArray)->orderBy('product.title','DESC')->get();
 
         $carttypes = DB::table('carttype')->get();
         //echo(json_encode(["id"=>$cartid,"cart"=>$cart,"items"=>$items])); exit;
 
         if($request->wantsJson()){
-            return response()->json(["cart"=>$cart,"items"=>$items,"success"=>true,"message"=>'orders fetched']);
+            return response()->json(["cart"=>$cart[0],"cartitems"=>$items,"carttypes"=>$carttypes,"success"=>true,"message"=>'orders fetched']);
         }
-        return view('admin.cart.updatecart',['cart'=>$cart, "carttypes"=>$carttypes]);
+        return view('admin.cart.updatecart',['cart'=>$cart[0], "carttypes"=>$carttypes]);
     }
 
 
@@ -180,15 +202,18 @@ class CartController extends Controller
         $authenticatedUserId = 1;
         $authenticatedUser = null;
         //return response()->json(['password'=>$request->input('password'),'email'=>$request->input('email'),"USER"=>$authenticatedUser,'userID'=>$authenticatedUserId ]);
-        if($request->has('password')){
+        if($request->has('logFromApp')){
             //try login then, else check if email exists else register new user;
 
-            if(Auth::attempt($request->only('email','password'))){
+            if(Auth::attempt(["email"=>$request->input('email'),"password"=>$request->input('password'),"id"=>$request->input('id')])){
                 $authenticatedUserId = Auth::id();
                 $authenticatedUser = Auth::user();
+
                 //$authenticatedUser->password = $request->input('password');
                 //return response()->json(["USER"=>$authenticatedUser,'userID'=>$authenticatedUserId ]);
+
             }else{
+
                 $email = DB::table('users')->where("email","=",$request->input('email'))->get();
                 //return response()->json(['email'=>$email]);
                 if(!empty($email[0])){
@@ -260,20 +285,28 @@ class CartController extends Controller
             "orderamount"=>$request->input('orderamount','N/A'),
             "ordernote"=>$request->input('ordernote','N/A'),
             "orderaddress"=>$request->input('orderaddress','N/A'),
+            "orderlocationid"=>$request->input('orderlocationid','38'),
+            "ordersublocationid"=>$request->input('ordersublocationid','768'),
             "orderref"=>$request->input('orderref','N/A'),
             "userid"=>$request->input('userid',$authenticatedUserId),
-            "paid"=>$request->input('paid','N'),
             "statusnote"=>$request->input('statusnote','not supplied yet'),
             "cartcategoryid"=>$request->input('cartcategoryid',1),
             "carttypeid"=>$request->input('carttypeid',1)
         );
 
+        //IF INSTANT PAY MARK AS PAID ELSE MARK AS UNPAID
+        if($request->input('carttypeid')==1){
+            $insertionArray_cart["paid"] = 'Y';
+        }else{
+            $insertionArray_cart["paid"] = "N";
+        }
+
         if($cartid = DB::table('cart')->insertGetId($insertionArray_cart)){
-            if($request->has('cartproductsids')){
+            if($request->has('cartproducts')){
                 $cartitemarray = array();
-                $cartproductsids = $request->input('cartproductsids');
-                for($i=0; $i<count($cartproductsids); $i++){
-                    $cartitemarray[] = array("cartid"=>$cartid, "productid"=>$cartproductsids[$i]);
+                $cartproducts = $request->input('cartproducts');
+                for($i=0; $i<count($cartproducts); $i++){
+                    $cartitemarray[] = array("cartid"=>$cartid, "productid"=>$cartproducts[$i]["id"], "price"=>$cartproducts[$i]["price"], "quantity"=>$cartproducts[$i]["quantity"]);
                 }
                 DB::table('cartitem')->insert($cartitemarray);
             }

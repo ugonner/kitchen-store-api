@@ -20,7 +20,7 @@ class CreateOrderaddressColumnOnCart extends Migration
         });
         Schema::table('cart', function (Blueprint $table) {
             $table->unsignedInteger('carttypeid');
-            $table->string('orderaddress');
+            $table->text('orderaddress');
         });
     }
 

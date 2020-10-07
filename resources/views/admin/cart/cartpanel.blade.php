@@ -55,10 +55,30 @@
                                 </thead>
                                 <tbody>
                                 @foreach ($carts as $c)
+                                @php
+                                $c->orderlocationname = "NA";
+                                $c->ordersublocationname = "NA";
+
+                                for($i=0; $i<count($locations); $i++){
+                                    if($locations[$i]->id == $c->orderlocationid){
+                                        $c->orderlocationname = $locations[$i]->name;
+                                    }
+                                }
+
+                                for($l=0; $l<count($sublocations); $l++){
+                                    if($sublocations[$l]->id == $c->ordersublocationid){
+                                        $c->ordersublocationname = $sublocations[$l]->name;
+                                    }
+                                }
+                                @endphp
                                 <tr>
                                     <td>{{$c->status}}  <button title="Order Status" data-content="{{$c->statusnote}}" data-toggle="popover"  data-html="true" data-trigger="focus" data-placement="auto" class="btn material-icons">more_vert</button></td>
                                     <td>{{$c->orderdate}} , {{$c->ordertime}} <a href="" onclick="event.preventDefault();" class="material-icons btn "  title="Order Note" data-content="{{$c->ordernote}}" data-placement="auto" data-toggle="popover" data-trigger="focus">more_vert</a> </td>
-                                    <td>{{$c->dateofpublication}}</td>
+                                    <td>
+                                        {{$c->dateofpublication}}
+                                        <br>@ {{$c->orderaddress}}
+                                        <br> {{$c->ordersublocationname .', '. $c->orderlocationname}}
+                                    </td>
                                     <td><div><img src="{{asset($c->userimageurl)}}" style="max-width: 90px; height: auto;" class="rounded-circle float-left" /> {{$c->username}}</div></td>
                                     <td>NGN{{ $c->orderamount}} Paid<span class="material-icon">question-mark</span> {{$c->paid}}</td>
                                     <td>

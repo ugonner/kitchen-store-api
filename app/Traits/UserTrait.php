@@ -76,8 +76,8 @@ trait UserTrait{
             "rolenote"=>$request->input('rolenote','just a good one'),
             "roleid"=>$request->input('roleid',1),
             "positionid"=>$request->input('positionid',1),
-            "locationid"=>$request->input('locationid',4),
-            "sublocationid"=>$request->input('sublocationid',1)
+            "locationid"=>$request->input('locationid',38),
+            "sublocationid"=>$request->input('sublocationid',768)
         );
         if(!empty($url)){
             $insertionArray_user{"imageurl"} = $url;

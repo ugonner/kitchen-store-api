@@ -4,17 +4,18 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAddressColumnOnUser extends Migration
+class CreateLastcartLastarticleColumnOnUsers extends Migration
 {
     /**
      * Run the migrations.
      *
      * @return void
      */
+
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->text('address');
+            $table->unsignedInteger('lastarticlescount');
         });
     }
 
@@ -26,7 +27,7 @@ class CreateAddressColumnOnUser extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('address');
+            $table->dropColumn('lastarticlescount');
         });
     }
 }

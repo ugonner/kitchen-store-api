@@ -19,9 +19,14 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/admin',function(){
+
+Route::middleware('auth')->get('/admin',function(){
     return view("layouts.admin");
 })->name('admin');
+
+Route::get('admin/getmenuitems',["uses"=>"Admin\AdminController@getMenuItems"])->name('getmenuitems');
+Route::get('/admin/getindexproducts',["uses"=>"Admin\AdminController@getIndexProducts"])->name('getindexproducts');
+
 Route::prefix('admin/user')->group(function(){
 
     Route::get('/', function(){
@@ -29,6 +34,7 @@ Route::prefix('admin/user')->group(function(){
     })->name('adminpanel');
 
     //get users in admin panel
+    Route::get('getusers/{pty}/{val}','UserController@getUsersByProperty')->name('getusersbyproperty');
     Route::get('userspanel','UserController@getAdminUsers')->name('userspanel');
     Route::get('userprofile/{userid}','UserController@getUser')->name('userprofile');
 
@@ -91,10 +97,10 @@ Route::prefix('/admin/article')->group(function(){
 
 });
 
-Route::get('admin/getmenuitems',["uses"=>"Admin\AdminController@getMenuItems"])->name('getmenuitems');
 Route::prefix('/admin/cart')->group(function(){
 
     Route::get("/",'Cart\CartController@getCarts')->name('cartpanel');
+    Route::get("/getcart/id/{id}",'Cart\CartController@getCart')->name('getcart_with_route_parameters');
     Route::get("/getcart",'Cart\CartController@getCart')->name('getcart');
     Route::get("/getcarts/{pty}/{val}",'Cart\CartController@getCartsByProperty')->name('getcarts_filtered');
 
@@ -331,6 +337,7 @@ Route::prefix('/admin/product')->group(function(){
     })->name('adminproductform');
 
     Route::get("updateproduct",'Product\ProductController@getproductForEdit')->name('updateproduct');
+    Route::get("getproduct/productid/{productid}",'Product\ProductController@getproductForEdit')->name('getproduct_with_route_parameters');
     Route::get("getproduct",'Product\ProductController@getproductForEdit')->name('getproduct');
 
     Route::get("articlepanel",function(){

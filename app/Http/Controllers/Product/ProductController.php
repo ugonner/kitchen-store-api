@@ -121,6 +121,9 @@ class ProductController extends Controller
             'users.id as usersid', 'users.name as usersname', 'users.imageurl as usersimageurl'
         ];
 
+        //increment no of views for product
+        DB::table('product')->where(["id"=>$productid])->increment('no_of_views',1);
+
         $product = DB::table('product')
             ->join('users', 'users.id','=','product.userid')->where('product.id','=',$productid)->select($productArray)->get();
 
@@ -431,7 +434,7 @@ class ProductController extends Controller
             if(!$imagepath = $request->file('imageurl')->storeAs('public/images/product/',$filename)){
                 echo('No no image not stored');
             }
-            Storage::delete($request->input('old_imageurl'));
+            unlink(public_path($request->input('old_imageurl')));
             $url = Storage::url('images/product/'.$filename);
         }
 

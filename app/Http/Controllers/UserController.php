@@ -45,6 +45,51 @@ class UserController extends Controller
         return view('admin.users.userspanel',array("AdminUsers"=>$users));
     }
 
+
+
+    protected function getUsersByProperty(Request $request){
+
+
+        $pty = ((($request->route('pty')))? $request->route('pty'): $request->input('pty'));
+        $val = ((($request->route('val')))? $request->route('val'): $request->input('val'));
+        //$val = $request->input('val');
+
+        $ptyArray = [
+            "ui"=> 'users.id',"email"=>'users.email', "ur"=>'users.roleid', "up"=>'users.postitionid',
+            "ul"=>'users.locationid', "us"=>'users.sublocationid', "uf"=>'users.focalareaid'
+        ];
+        if(!empty($ptyArray[$pty])){
+
+            $ptyString = $ptyArray[$pty];
+
+        }else{
+            if($request->wantsJson()){
+
+                return response()->json(["success"=>false, "message"=>'Invalid request, Please be warned']);
+            }
+            return back()->with('output','Malicious request');
+        }
+
+        $userfieldsarray = array('users.id','users.name','users.imageurl', 'rolenote', 'role.name as rolename','position.name as positionname',
+            'location.name as locationname','sublocation.name as sublocationname');
+
+        $users = DB::table('users')
+            ->join('role', 'users.roleid', '=', 'role.id')
+            ->join('position', 'users.positionid', '=', 'position.id')
+            ->join('location', 'users.locationid', '=', 'location.id')
+            ->join('sublocation', 'users.sublocationid', '=', 'sublocation.id')
+            ->where([$ptyString => $val])
+            ->select($userfieldsarray)->orderBy('users.id','DESC')->distinct()->paginate(50,$userfieldsarray);
+
+
+
+        //$users = $users[0];
+        if($request->wantsJson()){
+            return response()->json(["users"=>$users,"success"=>true, "message"=>'request successful']);
+        }
+        return view("admin.users.userspanel")->with(["AdminUsers" => $users]);
+    }
+
     protected function getUser(Request $request){
         $userIdByRequest = $request->input('userid');
         $userIdByParam = $request->route('userid');
@@ -151,8 +196,8 @@ class UserController extends Controller
             "rolenote"=>$request->input('rolenote','just a good one'),
             "roleid"=>$request->input('roleid',1),
             "positionid"=>$request->input('positionid',1),
-            "locationid"=>$request->input('locationid',4),
-            "sublocationid"=>$request->input('sublocationid',1)
+            "locationid"=>$request->input('locationid',38),
+            "sublocationid"=>$request->input('sublocationid',768)
         );
         if(!empty($url)){
             $insertionArray_user{"imageurl"} = $url;
@@ -253,7 +298,7 @@ class UserController extends Controller
         $updateArray = array(
             "name"=>$request->input('name'),
             "mobile"=>$request->input('mobile'),
-            "password"=>Hash::make($request->input('password')),
+            //"password"=>Hash::make($request->input('password')),
             "address"=>$request->input('address', 'N\A'),
             "about"=>$request->input('about', 'Just an enthusiast'),
             "rolenote"=>$request->input('rolenote','just a good one'),

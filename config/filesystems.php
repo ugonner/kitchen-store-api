@@ -85,4 +85,5 @@ return [
         public_path('storage') => storage_path('app/public')
     ],
 
+    // /storage/images/product/banner-menu.jpg1601468439.jpeg
 ];

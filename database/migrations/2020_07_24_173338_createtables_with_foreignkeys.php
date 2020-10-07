@@ -59,7 +59,6 @@ class CreatetablesWithForeignkeys extends Migration
 
             $table->index('objecttypeid','category_objecttypeid');
             $table->increments('id');
-            $table->foreign('objecttypeid')->references('id')->on('objecttype');
 
         });
 
@@ -80,8 +79,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('objectid');
 
             $table->unique(['clusterid','objecttypeid','objectid']);
-            $table->foreign('objecttypeid')->references('id')->on('objecttype');
-            $table->foreign('clusterid')->references('id')->on('cluster');
         });
 
 
@@ -141,7 +138,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('locationid');
 
             $table->increments('id');
-            $table->foreign('locationid')->references('id')->on('location');
         });
 
 
@@ -179,11 +175,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('lastadvertcount');
             $table->unsignedInteger('lastdonationcount');
 
-            //$table->increments('id');
-            $table->foreign('roleid')->references('id')->on('role')->onDelete('cascade');
-            $table->foreign('locationid')->references('id')->on('location')->onDelete('cascade');
-            $table->foreign('positionid')->references('id')->on('position')->onDelete('cascade');
-            $table->foreign('sublocationid')->references('id')->on('sublocation')->onDelete('cascade');
         });
 
 
@@ -193,7 +184,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('userid');
             $table->unsignedInteger('grouptypeid');
             $table->unique(['userid','grouptypeid']);
-            $table->foreign('userid')->references('id')->on('users');
 
         });
 
@@ -203,7 +193,7 @@ class CreatetablesWithForeignkeys extends Migration
             //$table->id();
             $table->string('title');
             $table->text('adverturl');
-            $table->text('detail');
+            $table->longText('detail');
             $table->string('imageurl');
             $table->string('dateofpublication')->default(NOW());
             $table->enum('published',["Y","N"])->default("N");
@@ -220,10 +210,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('no_of_views')->default(0);
             $table->increments('id');
 
-            $table->foreign('userid')->references('id')->on('users');
-            $table->foreign('categoryid')->references('id')->on('category');
-            $table->foreign('focalareaid')->references('id')->on('focalarea');
-            $table->foreign('clusterid')->references('id')->on('cluster');
         });
 
 
@@ -241,8 +227,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('categoryid')->default(1);
             $table->increments('id');
 
-            $table->foreign('userid')->references('id')->on('users');
-            $table->foreign('categoryid')->references('id')->on('category');
 
             $table->unsignedInteger('no_of_views')->default(0);
             $table->unsignedInteger('no_of_comments')->default(0);
@@ -275,9 +259,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('no_of_follows')->default(0);
             $table->increments('id');
 
-            $table->foreign('userid')->references('id')->on('users');
-            $table->foreign('categoryid')->references('id')->on('category');
-            $table->foreign('eventcategoryid')->references('id')->on('eventcategory');
         });
 
         //create objecttype (event) users ie attendees table; eg user cluster, each user focalarea
@@ -286,8 +267,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('eventid');
 
             $table->unique(['userid','eventid']);
-            $table->foreign('eventid')->references('id')->on('event');
-            $table->foreign('userid')->references('id')->on('users');
         });
 
         //create facilities table
@@ -314,12 +293,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('no_of_follows')->default(0);
             $table->increments('id');
 
-            $table->foreign('userid')->references('id')->on('users');
-            $table->foreign('categoryid')->references('id')->on('category');
-            $table->foreign('facilitycategoryid')->references('id')->on('facilitycategory');
-            $table->foreign('locationid')->references('id')->on('location');
-            $table->foreign('sublocationid')->references('id')->on('sublocation');
-            $table->foreign('facilitycertificationlevelid')->references('id')->on('facilitycertificationlevel');
         });
 
 
@@ -353,8 +326,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('userid');
             $table->increments('id');
 
-            $table->foreign('userid')->references('id')->on('users');
-            $table->foreign('focalareaid')->references('id')->on('focalarea');
 
         });
 
@@ -365,8 +336,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('locationid');
 
             $table->unique(['eventid','locationid']);
-            $table->foreign('eventid')->references('id')->on('event');
-            $table->foreign('locationid')->references('id')->on('location');
         });
 
         //create event sublocation ie areas of coverage
@@ -375,8 +344,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('sublocationid');
 
             $table->unique(['eventid','sublocationid']);
-            $table->foreign('eventid')->references('id')->on('event');
-            $table->foreign('sublocationid')->references('id')->on('sublocation');
         });
 
 
@@ -390,7 +357,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('objectid');
 
             $table->increments('id');
-            $table->foreign('objecttypeid')->references('id')->on('objecttype');
         });
 
         //create focalareaobjecttype table; eg focalarea events, each focalarea donations
@@ -400,8 +366,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('objectid');
 
             $table->unique(['focalareaid','objecttypeid','objectid']);
-            $table->foreign('focalareaid')->references('id')->on('focalarea');
-            $table->foreign('objecttypeid')->references('id')->on('objecttype');
         });
 
         //create galleryfile table
@@ -414,7 +378,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->date('dateofpublication');
 
             $table->increments('id');
-            $table->foreign('userid')->references('id')->on('users');
         });
 
 
@@ -443,11 +406,6 @@ class CreatetablesWithForeignkeys extends Migration
             $table->unsignedInteger('no_of_follows')->default(0);
             $table->increments('id');
 
-            $table->foreign('userid')->references('id')->on('users');
-            $table->foreign('categoryid')->references('id')->on('category');
-            $table->foreign('organizationcategoryid')->references('id')->on('organizationcategory');
-            $table->foreign('focalareaid')->references('id')->on('focalarea');
-            $table->foreign('organizationcertificationlevelid')->references('id')->on('organizationcertificationlevel');
         });
 
 
