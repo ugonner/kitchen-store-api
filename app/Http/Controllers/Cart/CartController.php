@@ -125,6 +125,7 @@ class CartController extends Controller
             'cartcategory.id as cartcategoryid','cartcategory.name as cartcategoryname',
             'users.id as userid','users.name as username','users.imageurl as userimageurl'];
 
+
         /*$cartfieldarray = [
             'cart.*',
             'cartcategory.id as cartcategoryid','cartcategory.name as cartcategoryname',
@@ -172,6 +173,7 @@ class CartController extends Controller
             'product.*', 'category.name as categoryname','productcategory.name as productcategoryname',
             "cartitem.price as cartitemprice","cartitem.quantity as cartitemquantity"
         ];
+
 
         $cart = DB::table('cart')
             ->join('cartcategory','cart.cartcategoryid','=','cartcategory.id')
